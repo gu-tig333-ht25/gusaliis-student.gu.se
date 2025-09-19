@@ -32,11 +32,16 @@ class Todo {
 }
 
 // Själva vyn (sidan) som visar listan
-class TodoListPage extends StatelessWidget {
+class TodoListPage extends StatefulWidget {
   const TodoListPage({super.key});
 
-  // En lista med att-göra-uppgifter
-  static const todos = <Todo>[
+  @override
+  State<TodoListPage> createState() => _TodoListPageState();
+}
+
+class _TodoListPageState extends State<TodoListPage> {
+    // En lista med att-göra-uppgifter
+  final List<Todo> _todos = [
     Todo('Write a book'),
     Todo('Do homework'),
     Todo('Tidy room', done: true),
@@ -47,12 +52,26 @@ class TodoListPage extends StatelessWidget {
     Todo('Meditate'),
   ];
 
+  final TextEditingController _controller = TextEditingController(); // För att läsa text från textfältet
+
+  void _addTodo() {
+    final text = _controller.text.trim(); // läs texten från fältet, ta bort ellanslag 
+    if (text.isEmpty) return; // gör ingenting om fältet är tot
+
+    setState(() { // UI ska ritas om när vi ändrar listan
+      _todos.add(Todo(text)); // lägg till en ny todo i listan 
+      _controller.clear(); // töm textfältet efter vi lagt till
+    });
+    
+    FocusScope.of(context).unfocus(); // stänger tangentbordet 
+  }
+
   @override
   Widget build(BuildContext context) {
     // Scaffold = sidlayout: appbar, body, floating button m.m.
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.grey[300], // Ljusgrå bakgrund på toppen
+        backgroundColor: const Color.fromARGB(255, 252, 182, 234), // Ljusgrå bakgrund på toppen
         centerTitle: true, // Centrerar texten
         title: const Text(
           'TIG333 TODO',
@@ -73,24 +92,41 @@ class TodoListPage extends StatelessWidget {
         child: Column(
           children: [
             // Sökrutan
-            const TextField(
-              enabled: false, // Går inte att skriva i
-              decoration: InputDecoration(
-                hintText: 'What are you going to do?', // Grå text inuti rutan
-                prefixIcon: Icon(Icons.search), // Förstoringsglas
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.black), // Svart ram
-                  borderRadius: BorderRadius.all(Radius.circular(8)),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField( 
+                    controller: _controller, // kopplar textfältet till _controller
+                    onSubmitted: (_) => _addTodo(), // Gör så att Enter också funkar
+                    decoration: const InputDecoration(
+                      hintText: 'What are you going to do?',
+                      prefixIcon: Icon(Icons.edit),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.black),
+                        borderRadius: BorderRadius.all(Radius.circular(8)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.black),
+                        borderRadius: BorderRadius.all(Radius.circular(8)),
+                      ),
+                    ),
+                  ),
                 ),
-                disabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.black), // Svart ram även om avstängd
-                  borderRadius: BorderRadius.all(Radius.circular(8)),
+
+                const SizedBox(width: 8), // Lite luft mellan fältet och knappen
+                IconButton.filledTonal(
+                  style: IconButton.styleFrom(
+                    backgroundColor: Color.fromARGB(255, 250, 201, 238),
+                  ),
+                  onPressed: _addTodo, // Använder din hjälpfunktion
+                  icon: const Icon(Icons.add),
+                  tooltip: 'Add',
                 ),
-              ),
+              ],
             ),
             const SizedBox(height: 16), // Avstånd ner till knapparna
 
-            // All, done, undone knapparna
+            // All, done, undone knapparna (fungerar inte just nu)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -120,15 +156,15 @@ class TodoListPage extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 16), 
 
             // Listan med todos
             Expanded(
               child: ListView.separated(
-                itemCount: todos.length, // Antal rader i listan
+                itemCount: _todos.length,
                 separatorBuilder: (_, __) => const Divider(height: 1), // En tunn linje mellan varje
                 itemBuilder: (context, index) {
-                  final todo = todos[index]; // Hämtar en todo i listan
+                  final todo = _todos[index]; // Hämtar en todo i listan
                   return IgnorePointer(
                     child: ListTile(
                       leading: Icon(
@@ -153,23 +189,6 @@ class TodoListPage extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-
-      // ADD-knapp längst ner till höger 
-      floatingActionButton: IgnorePointer(
-        child: ElevatedButton.icon(
-          onPressed: () {},
-          icon: const Icon(Icons.add), // Plus-ikon
-          label: const Text('ADD'), // Text bredvid
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.grey[100], 
-            foregroundColor: Colors.black, // Svart text
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          ),
         ),
       ),
     );
